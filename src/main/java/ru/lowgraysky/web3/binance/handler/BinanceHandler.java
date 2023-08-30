@@ -7,8 +7,10 @@ import org.springframework.web.reactive.function.server.ServerResponse;
 import reactor.core.publisher.Mono;
 import ru.lowgraysky.web3.binance.model.ServerTimeResponse;
 import ru.lowgraysky.web3.binance.model.SpotResponse;
+import ru.lowgraysky.web3.binance.model.WithdrawResponse;
 import ru.lowgraysky.web3.binance.service.BinanceService;
 import ru.lowgraysky.web3.model.BinanceSpotOrder;
+import ru.lowgraysky.web3.model.BinanceWithdraw;
 
 @Component
 @RequiredArgsConstructor
@@ -45,5 +47,17 @@ public class BinanceHandler {
   public Mono<ServerResponse> time(ServerRequest request) {
     return ServerResponse.ok()
             .body(binanceService.serverTime(), ServerTimeResponse.class);
+  }
+
+  public Mono<ServerResponse> withdraw(ServerRequest request) {
+    return request.bodyToMono(BinanceWithdraw.class )
+            .flatMap(body -> binanceService.withdraw(
+                    body.getCoin(),
+                    body.getNetwork(),
+                    body.getAddress(),
+                    body.getAmount()
+            ))
+            .flatMap(response -> ServerResponse.ok()
+                    .body(response, WithdrawResponse.class));
   }
 }

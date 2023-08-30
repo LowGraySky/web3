@@ -75,6 +75,25 @@ public class BinanceService extends RemoteRequestService {
             );
   }
 
+  public Mono<WithdrawResponse> withdraw(String coin, String network, String address, double amount) {
+    return serverTime()
+            .map(response -> {
+              Map<String, Object> params = getMapWithSignature();
+              params.put("coin", coin);
+              params.put("network", network);
+              params.put("address", address);
+              params.put("amount", amount);
+              params.put("walletType", 0);
+              params.put("timestamp", response.getServerTime());
+              return params;
+            })
+            .flatMap(params ->
+                    webClientWithAuth(binancePathProperties.getWithdraw(), params)
+                            .post()
+                            .exchangeToMono(responseFunction(WithdrawResponse.class))
+            );
+  }
+
   private Map<String, Object> buildSpotParametersMap(
           String symbol,
           Side side,
