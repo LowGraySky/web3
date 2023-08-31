@@ -29,7 +29,7 @@ public class BinanceService extends RemoteRequestService {
 
   @Override
   protected String baseUrl() {
-    return binanceCoreProperties.getBaseUrl();
+    return binanceCoreProperties.getBaseurl();
   }
 
   public Mono<BalanceResponse> balance() {
@@ -115,7 +115,7 @@ public class BinanceService extends RemoteRequestService {
 
   private Map<String, Object> getMapWithSignature() {
     Map<String, Object> map = new HashMap<>();
-    map.put("signature", binanceCoreProperties.getSecretKey());
+    map.put("signature", binanceCoreProperties.getSecretkey());
     return map;
   }
 

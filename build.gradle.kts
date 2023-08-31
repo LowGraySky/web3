@@ -22,8 +22,8 @@ repositories {
 }
 
 dependencies {
+    implementation("org.telegram:telegrambots:6.8.0")
     implementation("org.slf4j:slf4j-api")
-    implementation("org.web3j:core:5.0.0")
     implementation("org.springframework.boot:spring-boot-starter-webflux")
     compileOnly("org.projectlombok:lombok")
     annotationProcessor("org.projectlombok:lombok")

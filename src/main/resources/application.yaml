@@ -1,0 +1,13 @@
+binance:
+  core:
+    baseurl:
+    apikey:
+    secretkey:
+  path:
+    time: /api/v3/time
+    order: /api/v3/order
+    withdraw: /sapi/v1/capital/withdraw/apply
+
+telegram:
+  username:
+  token:

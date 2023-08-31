@@ -1,16 +1,16 @@
 package ru.lowgraysky.web3.binance.config;
 
-import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 @Getter
 @Setter
-@AllArgsConstructor
+@NoArgsConstructor
 @ConfigurationProperties(prefix = "binance.core")
 public class BinanceCoreProperties {
-  private String baseUrl;
+  private String baseurl;
   private String apikey;
-  private String secretKey;
+  private String secretkey;
 }
