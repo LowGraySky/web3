@@ -9,12 +9,13 @@ import ru.lowgraysky.web3.binance.model.ServerTimeResponse;
 import ru.lowgraysky.web3.binance.model.SpotResponse;
 import ru.lowgraysky.web3.binance.model.WithdrawResponse;
 import ru.lowgraysky.web3.binance.service.BinanceService;
+import ru.lowgraysky.web3.handler.BaseHandler;
 import ru.lowgraysky.web3.model.BinanceSpotOrder;
 import ru.lowgraysky.web3.model.BinanceWithdraw;
 
 @Component
 @RequiredArgsConstructor
-public class BinanceHandler {
+public class BinanceHandler implements BaseHandler {
 
   private final BinanceService binanceService;
 
@@ -26,9 +27,9 @@ public class BinanceHandler {
                     order.getQuantity(),
                     order.getPrice())
             )
-            .flatMap(response -> ServerResponse.ok()
-                    .body(response, SpotResponse.class)
-            );
+            .flatMap(response -> ServerResponse.ok().body(response, SpotResponse.class)
+            )
+            .onErrorResume(ERROR_FUNCTION);
   }
 
   public Mono<ServerResponse> market(ServerRequest request) {
@@ -39,14 +40,16 @@ public class BinanceHandler {
                     order.getQuantity(),
                     order.getPrice())
             )
-            .flatMap(response -> ServerResponse.ok()
-                    .body(response, SpotResponse.class)
-            );
+            .flatMap(response -> ServerResponse.ok().body(response, SpotResponse.class)
+            )
+            .onErrorResume(ERROR_FUNCTION);
   }
 
   public Mono<ServerResponse> time(ServerRequest request) {
-    return ServerResponse.ok()
-            .body(binanceService.serverTime(), ServerTimeResponse.class);
+    return Mono.just(request)
+            .flatMap(req -> ServerResponse.ok()
+                    .body(binanceService.serverTime(), ServerTimeResponse.class)
+                    .onErrorResume(ERROR_FUNCTION));
   }
 
   public Mono<ServerResponse> withdraw(ServerRequest request) {
@@ -57,7 +60,7 @@ public class BinanceHandler {
                     body.getAddress(),
                     body.getAmount()
             ))
-            .flatMap(response -> ServerResponse.ok()
-                    .body(response, WithdrawResponse.class));
+            .flatMap(response -> ServerResponse.ok().body(response, WithdrawResponse.class))
+            .onErrorResume(ERROR_FUNCTION);
   }
 }

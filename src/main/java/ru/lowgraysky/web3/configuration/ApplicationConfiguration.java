@@ -20,11 +20,6 @@ import ru.lowgraysky.web3.telegram.config.TelegramProperties;
 public class ApplicationConfiguration {
 
   @Bean
-  public RouterConfiguration routerConfiguration() {
-    return new RouterConfiguration();
-  }
-
-  @Bean
   public TelegramBot telegramBot(TelegramProperties telegramProperties) {
     TelegramBot telegramBot = new TelegramBot(telegramProperties);
     try {

@@ -22,6 +22,7 @@ repositories {
 }
 
 dependencies {
+    implementation("org.springframework.boot:spring-boot-starter-actuator")
     implementation("org.telegram:telegrambots:6.8.0")
     implementation("org.slf4j:slf4j-api")
     implementation("org.springframework.boot:spring-boot-starter-webflux")
