@@ -1,6 +1,5 @@
 package ru.lowgraysky.web3.binance.service;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -21,15 +20,15 @@ import java.util.Map;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class BinanceService extends RemoteRequestService {
 
   private final BinancePathProperties binancePathProperties;
   private final BinanceCoreProperties binanceCoreProperties;
 
-  @Override
-  protected String baseUrl() {
-    return binanceCoreProperties.getBaseurl();
+  public BinanceService(BinancePathProperties pathProperties, BinanceCoreProperties coreProperties) {
+    super(coreProperties.getBaseUrl());
+    this.binanceCoreProperties = coreProperties;
+    this.binancePathProperties = pathProperties;
   }
 
   public Mono<BalanceResponse> balance() {
@@ -115,14 +114,14 @@ public class BinanceService extends RemoteRequestService {
 
   private Map<String, Object> getMapWithSignature() {
     Map<String, Object> map = new HashMap<>();
-    map.put("signature", binanceCoreProperties.getSecretkey());
+    map.put("signature", binanceCoreProperties.getSecretKey());
     return map;
   }
 
   private WebClient webClientWithAuth(String path, Map<String, Object> params) {
     return WebClient.builder()
             .uriBuilderFactory(new DefaultUriBuilderFactory(uriComponentsBuilder(path, params)))
-            .defaultHeader("X-MBX-APIKEY", binanceCoreProperties.getApikey())
+            .defaultHeader("X-MBX-APIKEY", binanceCoreProperties.getApiKey())
             .build();
   }
 }
