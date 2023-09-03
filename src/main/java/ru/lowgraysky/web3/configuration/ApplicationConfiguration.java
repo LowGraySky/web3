@@ -11,7 +11,7 @@ import org.telegram.telegrambots.updatesreceivers.DefaultBotSession;
 import ru.lowgraysky.web3.binance.config.BinanceCoreProperties;
 import ru.lowgraysky.web3.binance.config.BinancePathProperties;
 import ru.lowgraysky.web3.binance.service.BinanceService;
-import ru.lowgraysky.web3.telegram.config.TelegramBot;
+import ru.lowgraysky.web3.telegram.service.TelegramBot;
 import ru.lowgraysky.web3.telegram.config.TelegramProperties;
 
 @Slf4j
