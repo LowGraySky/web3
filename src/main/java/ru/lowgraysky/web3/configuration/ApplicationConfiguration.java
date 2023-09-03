@@ -10,6 +10,7 @@ import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.telegram.telegrambots.updatesreceivers.DefaultBotSession;
 import ru.lowgraysky.web3.binance.config.BinanceCoreProperties;
 import ru.lowgraysky.web3.binance.config.BinancePathProperties;
+import ru.lowgraysky.web3.binance.service.BinanceService;
 import ru.lowgraysky.web3.telegram.config.TelegramBot;
 import ru.lowgraysky.web3.telegram.config.TelegramProperties;
 
@@ -20,8 +21,8 @@ import ru.lowgraysky.web3.telegram.config.TelegramProperties;
 public class ApplicationConfiguration {
 
   @Bean
-  public TelegramBot telegramBot(TelegramProperties telegramProperties) {
-    TelegramBot telegramBot = new TelegramBot(telegramProperties);
+  public TelegramBot telegramBot(TelegramProperties telegramProperties, BinanceService binanceService) {
+    TelegramBot telegramBot = new TelegramBot(binanceService, telegramProperties);
     try {
       TelegramBotsApi botsApi = new TelegramBotsApi(DefaultBotSession.class);
       botsApi.registerBot(telegramBot);
