@@ -46,10 +46,9 @@ public class BinanceHandler implements BaseHandler {
   }
 
   public Mono<ServerResponse> time(ServerRequest request) {
-    return Mono.just(request)
-            .flatMap(req -> ServerResponse.ok()
-                    .body(binanceService.serverTime(), ServerTimeResponse.class)
-                    .onErrorResume(ERROR_FUNCTION));
+    return ServerResponse.ok()
+            .body(binanceService.serverTime(), ServerTimeResponse.class)
+            .onErrorResume(ERROR_FUNCTION);
   }
 
   public Mono<ServerResponse> withdraw(ServerRequest request) {

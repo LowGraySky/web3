@@ -45,9 +45,11 @@ public class BinanceService extends RemoteRequestService {
   }
 
   public Mono<ServerTimeResponse> serverTime() {
+   logRequest(log, "GET", binancePathProperties.getTime(), Collections.emptyMap());
     return webClient(binancePathProperties.getTime(), Collections.emptyMap())
             .get()
-            .exchangeToMono(responseFunction(ServerTimeResponse.class));
+            .exchangeToMono(responseFunction(ServerTimeResponse.class))
+            .doOnNext(response -> logResponse(log, response));
   }
 
   public Mono<SpotResponse> limit(String symbol, Side side, double quantity, double price) {
@@ -57,21 +59,25 @@ public class BinanceService extends RemoteRequestService {
               paramsMap.put("timeInForce", TimeInForce.FOK);
               return paramsMap;
             })
+            .doOnNext(params -> logRequest(log, "POST", binancePathProperties.getOrder(), params))
             .flatMap(params -> webClientWithAuth(binancePathProperties.getOrder(), params)
                     .get()
                     .exchangeToMono(responseFunction(SpotResponse.class))
-            );
+            )
+            .doOnNext(response -> logResponse(log, response));
   }
 
   public Mono<SpotResponse> market(String symbol, Side side, double quantity, double price) {
     return serverTime()
             .map(response ->
                     buildSpotParametersMap(symbol, side, quantity, price, response.getServerTime(), OrderType.MARKET))
+            .doOnNext(params -> logRequest(log, "POST", binancePathProperties.getOrder(), params))
             .flatMap(params ->
                     webClientWithAuth(binancePathProperties.getOrder(), params)
                             .get()
                             .exchangeToMono(responseFunction(SpotResponse.class))
-            );
+            )
+            .doOnNext(response -> logResponse(log, response));
   }
 
   public Mono<WithdrawResponse> withdraw(String coin, String network, String address, double amount) {
@@ -86,11 +92,13 @@ public class BinanceService extends RemoteRequestService {
               params.put("timestamp", response.getServerTime());
               return params;
             })
+            .doOnNext(params -> logRequest(log, "POST", binancePathProperties.getWithdraw(), params))
             .flatMap(params ->
                     webClientWithAuth(binancePathProperties.getWithdraw(), params)
                             .post()
                             .exchangeToMono(responseFunction(WithdrawResponse.class))
-            );
+            )
+            .doOnNext(response -> logResponse(log, response));
   }
 
   private Map<String, Object> buildSpotParametersMap(
