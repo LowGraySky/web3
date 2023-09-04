@@ -2,26 +2,32 @@ package ru.lowgraysky.web3.binance.service;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.util.MultiValueMap;
+import org.springframework.util.MultiValueMapAdapter;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.util.DefaultUriBuilderFactory;
 import reactor.core.publisher.Mono;
-import ru.lowgraysky.web3.binance.model.*;
+import ru.lowgraysky.web3.binance.config.BinanceCoreProperties;
+import ru.lowgraysky.web3.binance.config.BinancePathProperties;
+import ru.lowgraysky.web3.binance.model.ServerTimeResponse;
+import ru.lowgraysky.web3.binance.model.SpotResponse;
+import ru.lowgraysky.web3.binance.model.WithdrawResponse;
 import ru.lowgraysky.web3.binance.model.enums.OrderType;
 import ru.lowgraysky.web3.binance.model.enums.ResponseType;
 import ru.lowgraysky.web3.binance.model.enums.Side;
 import ru.lowgraysky.web3.binance.model.enums.TimeInForce;
-import ru.lowgraysky.web3.binance.config.BinanceCoreProperties;
-import ru.lowgraysky.web3.binance.config.BinancePathProperties;
 import ru.lowgraysky.web3.service.RemoteRequestService;
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Slf4j
 @Service
 public class BinanceService extends RemoteRequestService {
 
+  private static final String WALLET_TYPE = "0";
   private final BinancePathProperties binancePathProperties;
   private final BinanceCoreProperties binanceCoreProperties;
 
@@ -31,22 +37,25 @@ public class BinanceService extends RemoteRequestService {
     this.binancePathProperties = pathProperties;
   }
 
-  public Mono<BalanceResponse> balance() {
-    throw new UnsupportedOperationException("Balance operation not supported!");
-//    Map<String, Object> params = Map.of(
-//            "type", "SPOT",
-//            "timestamp", epochNow()
-//            );
-//    return webClient(BALANCE_PATH, params)
-//            .get()
-//            .exchangeToMono(responseFunction(BalanceResponse.class))
-//            .map(BalanceResponse::getSnapshotVos)
-//            .map();
+  public Mono<String> balance() {
+    return serverTime()
+            .map(response -> {
+              Map<String, List<String>> params = getMapWithSignature();
+              params.put("timestamp", List.of(Long.toString(response.getServerTime())));
+              return params;
+            })
+            .map(MultiValueMapAdapter::new)
+            .doOnNext(params -> logRequest(log, "GET", binancePathProperties.getBalance(), params))
+            .flatMap(params -> webClientWithAuth(binancePathProperties.getBalance(), params)
+                    .get()
+                    .exchangeToMono(responseFunction(String.class))
+            )
+            .doOnNext(response -> logResponse(log, response));
   }
 
   public Mono<ServerTimeResponse> serverTime() {
    logRequest(log, "GET", binancePathProperties.getTime(), Collections.emptyMap());
-    return webClient(binancePathProperties.getTime(), Collections.emptyMap())
+    return webClient(binancePathProperties.getTime(), new MultiValueMapAdapter<>(Collections.emptyMap()))
             .get()
             .exchangeToMono(responseFunction(ServerTimeResponse.class))
             .doOnNext(response -> logResponse(log, response));
@@ -54,11 +63,12 @@ public class BinanceService extends RemoteRequestService {
 
   public Mono<SpotResponse> limit(String symbol, Side side, double quantity, double price) {
     return serverTime()
-            .map(response -> {Map<String, Object> paramsMap =
+            .map(response -> {Map<String, List<String>> paramsMap =
                     buildSpotParametersMap(symbol, side, quantity, price, response.getServerTime(), OrderType.LIMIT);
-              paramsMap.put("timeInForce", TimeInForce.FOK);
+              paramsMap.put("timeInForce", List.of(TimeInForce.FOK.name()));
               return paramsMap;
             })
+            .map(MultiValueMapAdapter::new)
             .doOnNext(params -> logRequest(log, "POST", binancePathProperties.getOrder(), params))
             .flatMap(params -> webClientWithAuth(binancePathProperties.getOrder(), params)
                     .get()
@@ -71,6 +81,7 @@ public class BinanceService extends RemoteRequestService {
     return serverTime()
             .map(response ->
                     buildSpotParametersMap(symbol, side, quantity, price, response.getServerTime(), OrderType.MARKET))
+            .map(MultiValueMapAdapter::new)
             .doOnNext(params -> logRequest(log, "POST", binancePathProperties.getOrder(), params))
             .flatMap(params ->
                     webClientWithAuth(binancePathProperties.getOrder(), params)
@@ -83,15 +94,16 @@ public class BinanceService extends RemoteRequestService {
   public Mono<WithdrawResponse> withdraw(String coin, String network, String address, double amount) {
     return serverTime()
             .map(response -> {
-              Map<String, Object> params = getMapWithSignature();
-              params.put("coin", coin);
-              params.put("network", network);
-              params.put("address", address);
-              params.put("amount", amount);
-              params.put("walletType", 0);
-              params.put("timestamp", response.getServerTime());
+              Map<String, List<String>> params = getMapWithSignature();
+              params.put("coin", List.of(coin));
+              params.put("network", List.of(network));
+              params.put("address", List.of(address));
+              params.put("amount", List.of(Double.toString(amount)));
+              params.put("walletType", List.of(WALLET_TYPE));
+              params.put("timestamp", List.of(Long.toString(response.getServerTime())));
               return params;
             })
+            .map(MultiValueMapAdapter::new)
             .doOnNext(params -> logRequest(log, "POST", binancePathProperties.getWithdraw(), params))
             .flatMap(params ->
                     webClientWithAuth(binancePathProperties.getWithdraw(), params)
@@ -101,7 +113,7 @@ public class BinanceService extends RemoteRequestService {
             .doOnNext(response -> logResponse(log, response));
   }
 
-  private Map<String, Object> buildSpotParametersMap(
+  private Map<String, List<String>> buildSpotParametersMap(
           String symbol,
           Side side,
           double quantity,
@@ -109,24 +121,24 @@ public class BinanceService extends RemoteRequestService {
           long timestamp,
           OrderType orderType
   ) {
-    Map<String, Object> paramsMap = getMapWithSignature();
-    paramsMap.put("symbol", symbol);
-    paramsMap.put("side", side);
-    paramsMap.put("type", orderType);
-    paramsMap.put("timestamp", timestamp);
-    paramsMap.put("quantity", quantity);
-    paramsMap.put("price", price);
-    paramsMap.put("newOrderRespType", ResponseType.ACK);
+    Map<String, List<String>> paramsMap = getMapWithSignature();
+    paramsMap.put("symbol", List.of(symbol));
+    paramsMap.put("side", List.of(side.name()));
+    paramsMap.put("type", List.of(orderType.name()));
+    paramsMap.put("timestamp", List.of(Long.toString(timestamp)));
+    paramsMap.put("quantity", List.of(Double.toString(quantity)));
+    paramsMap.put("price", List.of(Double.toString(price)));
+    paramsMap.put("newOrderRespType", List.of(ResponseType.ACK.name()));
     return paramsMap;
   }
 
-  private Map<String, Object> getMapWithSignature() {
-    Map<String, Object> map = new HashMap<>();
-    map.put("signature", binanceCoreProperties.getSecretKey());
+  private Map<String, List<String>> getMapWithSignature() {
+    Map<String, List<String>> map = new HashMap<>();
+    map.put("signature", List.of(binanceCoreProperties.getSecretKey()));
     return map;
   }
 
-  private WebClient webClientWithAuth(String path, Map<String, Object> params) {
+  private WebClient webClientWithAuth(String path, MultiValueMap<String, String> params) {
     return WebClient.builder()
             .uriBuilderFactory(new DefaultUriBuilderFactory(uriComponentsBuilder(path, params)))
             .defaultHeader("X-MBX-APIKEY", binanceCoreProperties.getApiKey())

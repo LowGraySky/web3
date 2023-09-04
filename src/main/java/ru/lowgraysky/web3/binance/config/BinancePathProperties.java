@@ -13,4 +13,5 @@ public class BinancePathProperties {
   private String time;
   private String withdraw;
   private String order;
+  private String balance;
 }

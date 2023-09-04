@@ -17,3 +17,4 @@ binance:
     time: /api/v3/time
     order: /api/v3/order
     withdraw: /sapi/v1/capital/withdraw/apply
+    balance: /sapi/v1/capital/config/getall

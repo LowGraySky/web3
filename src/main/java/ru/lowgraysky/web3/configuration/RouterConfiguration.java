@@ -16,6 +16,7 @@ public class RouterConfiguration {
     return route()
             .path("binance", router -> router
                     .GET("/time", handler::time)
+                    .GET("/balance", handler::balance)
                     .POST("/limit", handler::limit)
                     .POST("/market", handler::market)
                     .POST("/withdraw", handler::withdraw))

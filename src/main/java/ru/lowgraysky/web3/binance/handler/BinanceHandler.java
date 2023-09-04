@@ -62,4 +62,10 @@ public class BinanceHandler implements BaseHandler {
             .flatMap(response -> ServerResponse.ok().body(response, WithdrawResponse.class))
             .onErrorResume(ERROR_FUNCTION);
   }
+
+  public Mono<ServerResponse> balance(ServerRequest request) {
+    return ServerResponse.ok()
+            .body(binanceService.balance(), String.class)
+            .onErrorResume(ERROR_FUNCTION);
+  }
 }
