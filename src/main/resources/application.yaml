@@ -18,3 +18,13 @@ binance:
     order: /api/v3/order
     withdraw: /sapi/v1/capital/withdraw/apply
     balance: /sapi/v1/capital/config/getall
+
+bitget:
+  core:
+    base-url: https://api.bitget.com
+    #    https://capi.bitget.com
+    api-key:
+    secret-key:
+    passphrase:
+  path:
+    order: /api/spot/v1/trade/orders
