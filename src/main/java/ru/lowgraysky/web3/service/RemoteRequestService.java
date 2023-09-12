@@ -20,7 +20,7 @@ public abstract class RemoteRequestService {
 
   protected final String BASE_URL;
   private final String REQUEST_SCHEMA = "https";
-  private final String REQUEST_LOG_TEMPLATE = "Perfrom '{}' request to '{}', with params '{}'";
+  private final String REQUEST_LOG_TEMPLATE = "Perform '{}' request to '{}', with params '{}'";
 
   protected void logRequest(Logger logger, String method, String path, Map<String, List<String>> params) {
     logger.info(REQUEST_LOG_TEMPLATE, method, path, params);
