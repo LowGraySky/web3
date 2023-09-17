@@ -42,12 +42,9 @@ public class BinanceService extends RemoteRequestService {
   }
 
   public Mono<BalanceResponse> balance() {
-    return serverTime()
-            .map(response -> {
-              Map<String, List<String>> params = new HashMap<>();
-              params.put("timestamp", List.of(Long.toString(response.getServerTime())));
-              return params;
-            })
+    Map<String, List<String>> par = new HashMap<>();
+    par.put("timestamp", List.of(Long.toString(nowInMillis())));
+    return Mono.just(par)
             .map(MultiValueMapAdapter::new)
             .doOnNext(params -> logRequest(log, "GET", binancePathProperties.getBalance(), params))
             .flatMap(params -> webClientWithAuth(binancePathProperties.getBalance(), params)
@@ -74,12 +71,10 @@ public class BinanceService extends RemoteRequestService {
   }
 
   public Mono<SpotResponse> limit(String symbol, Side side, double quantity, double price) {
-    return serverTime()
-            .map(response -> {Map<String, List<String>> paramsMap =
-                    buildSpotParametersMap(symbol, side, quantity, price, response.getServerTime(), OrderType.LIMIT);
-              paramsMap.put("timeInForce", List.of(TimeInForce.FOK.name()));
-              return paramsMap;
-            })
+    Map<String, List<String>> paramsMap =
+            buildSpotParametersMap(symbol, side, quantity, price, nowInMillis(), OrderType.LIMIT);
+    paramsMap.put("timeInForce", List.of(TimeInForce.FOK.name()));
+    return Mono.just(paramsMap)
             .map(MultiValueMapAdapter::new)
             .doOnNext(params -> logRequest(log, "POST", binancePathProperties.getOrder(), params))
             .flatMap(params -> webClientWithAuth(binancePathProperties.getOrder(), params)
@@ -90,9 +85,7 @@ public class BinanceService extends RemoteRequestService {
   }
 
   public Mono<SpotResponse> market(String symbol, Side side, double quantity, double price) {
-    return serverTime()
-            .map(response ->
-                    buildSpotParametersMap(symbol, side, quantity, price, response.getServerTime(), OrderType.MARKET))
+    return Mono.just(buildSpotParametersMap(symbol, side, quantity, price, nowInMillis(), OrderType.MARKET))
             .map(MultiValueMapAdapter::new)
             .doOnNext(params -> logRequest(log, "POST", binancePathProperties.getOrder(), params))
             .flatMap(params ->
@@ -104,18 +97,14 @@ public class BinanceService extends RemoteRequestService {
   }
 
   public Mono<WithdrawResponse> withdraw(String coin, String network, String address, double amount) {
-    return serverTime()
-            .map(response -> {
-              Map<String, List<String>> params = new HashMap<>();
-              params.put("coin", List.of(coin));
-              params.put("network", List.of(network));
-              params.put("address", List.of(address));
-              params.put("amount", List.of(Double.toString(amount)));
-              params.put("walletType", List.of(WALLET_TYPE));
-              params.put("timestamp", List.of(Long.toString(response.getServerTime())));
-              return params;
-            })
-            .map(MultiValueMapAdapter::new)
+    Map<String, List<String>> par = new HashMap<>();
+    par.put("coin", List.of(coin));
+    par.put("network", List.of(network));
+    par.put("address", List.of(address));
+    par.put("amount", List.of(Double.toString(amount)));
+    par.put("walletType", List.of(WALLET_TYPE));
+    par.put("timestamp", List.of(Long.toString(nowInMillis())));
+    return Mono.just(new MultiValueMapAdapter<>(par))
             .doOnNext(params -> logRequest(log, "POST", binancePathProperties.getWithdraw(), params))
             .flatMap(params ->
                     webClientWithAuth(binancePathProperties.getWithdraw(), params)

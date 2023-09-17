@@ -15,6 +15,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 import reactor.core.publisher.Mono;
 
 import java.nio.charset.Charset;
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -63,6 +64,10 @@ public abstract class RemoteRequestService {
     String sign = signature(data, secret);
     params.add("signature", sign);
     return params;
+  }
+
+  protected long nowInMillis() {
+    return Instant.now().toEpochMilli();
   }
 
   protected UriComponentsBuilder uriComponentsBuilder(String path, MultiValueMap<String, String> params) {
