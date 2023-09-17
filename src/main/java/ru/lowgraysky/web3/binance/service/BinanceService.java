@@ -54,7 +54,7 @@ public class BinanceService extends RemoteRequestService {
   }
 
   public Mono<ServerTimeResponse> serverTime() {
-   logRequest(log, "GET", binancePathProperties.getTime(), Collections.emptyMap());
+    logRequest(log, "GET", binancePathProperties.getTime(), Collections.emptyMap());
     return webClient(binancePathProperties.getTime(), new MultiValueMapAdapter<>(Collections.emptyMap()))
             .get()
             .exchangeToMono(responseFunction(ServerTimeResponse.class))

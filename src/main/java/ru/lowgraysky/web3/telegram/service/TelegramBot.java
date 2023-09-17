@@ -18,8 +18,7 @@ import ru.lowgraysky.web3.telegram.config.TelegramProperties;
 import java.util.ArrayList;
 import java.util.List;
 
-import static ru.lowgraysky.web3.telegram.model.ExchangeName.BINANCE;
-import static ru.lowgraysky.web3.telegram.model.ExchangeName.BITGET;
+import static ru.lowgraysky.web3.telegram.model.ExchangeName.*;
 
 @Slf4j
 @Getter
@@ -28,7 +27,7 @@ public class TelegramBot extends TelegramLongPollingBot {
 
   private final BinanceService binanceService;
   private final TelegramProperties telegramProperties;
-  private final List<String> keyboardButtonsText = List.of(BINANCE, BITGET);
+  private final List<String> keyboardButtonsText = List.of(BINANCE, BITGET, BYBIT);
 
   @Override
   public String getBotToken() {
@@ -70,8 +69,6 @@ public class TelegramBot extends TelegramLongPollingBot {
     keyboardMarkup.setResizeKeyboard(true);
     return keyboardMarkup;
   }
-
-
 
   private Mono<Message> sendMessage(String message, ReplyKeyboardMarkup replyKeyboardMarkup) {
     SendMessage msg = createMessage(message, replyKeyboardMarkup);
