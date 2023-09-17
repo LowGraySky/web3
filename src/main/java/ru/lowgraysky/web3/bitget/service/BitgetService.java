@@ -1,10 +1,8 @@
 package ru.lowgraysky.web3.bitget.service;
 
 import lombok.SneakyThrows;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.http.entity.ContentType;
 import org.springframework.http.HttpHeaders;
-import org.springframework.stereotype.Service;
 import org.springframework.util.MultiValueMap;
 import org.springframework.util.MultiValueMapAdapter;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -13,12 +11,10 @@ import ru.lowgraysky.web3.bitget.config.BitgetCoreProperties;
 import ru.lowgraysky.web3.bitget.config.BitgetPathProperties;
 import ru.lowgraysky.web3.service.RemoteRequestService;
 
-import javax.crypto.Mac;
-import javax.crypto.spec.SecretKeySpec;
 import java.util.List;
 import java.util.Map;
 
-@Service
+
 public class BitgetService extends RemoteRequestService {
 
     private final BitgetCoreProperties bitgetCoreProperties;
@@ -58,5 +54,6 @@ public class BitgetService extends RemoteRequestService {
 //        SecretKeySpec secretKeySpec = new SecretKeySpec(secretKeyBytes, "HmacSHA256");
 //        mac.init(secretKeySpec);
 //        return Base64.getEncoder().encodeToString(mac.doFinal(preHash.getBytes("UTF-8")));
+        return null;
     }
 }

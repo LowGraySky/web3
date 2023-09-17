@@ -4,11 +4,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.util.MultiValueMap;
 import org.springframework.util.MultiValueMapAdapter;
+import org.springframework.web.reactive.function.client.ExchangeStrategies;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.util.DefaultUriBuilderFactory;
 import reactor.core.publisher.Mono;
 import ru.lowgraysky.web3.binance.config.BinanceCoreProperties;
 import ru.lowgraysky.web3.binance.config.BinancePathProperties;
+import ru.lowgraysky.web3.binance.model.BalanceResponse;
 import ru.lowgraysky.web3.binance.model.ServerTimeResponse;
 import ru.lowgraysky.web3.binance.model.SpotResponse;
 import ru.lowgraysky.web3.binance.model.WithdrawResponse;
@@ -18,10 +20,12 @@ import ru.lowgraysky.web3.binance.model.enums.Side;
 import ru.lowgraysky.web3.binance.model.enums.TimeInForce;
 import ru.lowgraysky.web3.service.RemoteRequestService;
 
+import java.math.BigDecimal;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -37,10 +41,10 @@ public class BinanceService extends RemoteRequestService {
     this.binancePathProperties = pathProperties;
   }
 
-  public Mono<String> balance() {
+  public Mono<BalanceResponse> balance() {
     return serverTime()
             .map(response -> {
-              Map<String, List<String>> params = getMapWithSignature();
+              Map<String, List<String>> params = new HashMap<>();
               params.put("timestamp", List.of(Long.toString(response.getServerTime())));
               return params;
             })
@@ -48,9 +52,17 @@ public class BinanceService extends RemoteRequestService {
             .doOnNext(params -> logRequest(log, "GET", binancePathProperties.getBalance(), params))
             .flatMap(params -> webClientWithAuth(binancePathProperties.getBalance(), params)
                     .get()
-                    .exchangeToMono(responseFunction(String.class))
+                    .exchangeToMono(responseFunction(BalanceResponse.class))
             )
-            .doOnNext(response -> logResponse(log, response));
+            .doOnNext(response -> logResponse(log, response))
+            .map(res -> {
+              List<BalanceResponse.Balance> balances = res.getBalances()
+                      .stream()
+                      .filter(b -> b.getFree().compareTo(BigDecimal.ZERO) > 0)
+                      .collect(Collectors.toList());
+              res.setBalances(balances);
+              return res;
+            });
   }
 
   public Mono<ServerTimeResponse> serverTime() {
@@ -94,7 +106,7 @@ public class BinanceService extends RemoteRequestService {
   public Mono<WithdrawResponse> withdraw(String coin, String network, String address, double amount) {
     return serverTime()
             .map(response -> {
-              Map<String, List<String>> params = getMapWithSignature();
+              Map<String, List<String>> params = new HashMap<>();
               params.put("coin", List.of(coin));
               params.put("network", List.of(network));
               params.put("address", List.of(address));
@@ -121,7 +133,7 @@ public class BinanceService extends RemoteRequestService {
           long timestamp,
           OrderType orderType
   ) {
-    Map<String, List<String>> paramsMap = getMapWithSignature();
+    Map<String, List<String>> paramsMap = new HashMap<>();
     paramsMap.put("symbol", List.of(symbol));
     paramsMap.put("side", List.of(side.name()));
     paramsMap.put("type", List.of(orderType.name()));
@@ -132,15 +144,15 @@ public class BinanceService extends RemoteRequestService {
     return paramsMap;
   }
 
-  private Map<String, List<String>> getMapWithSignature() {
-    Map<String, List<String>> map = new HashMap<>();
-    map.put("signature", List.of(binanceCoreProperties.getSecretKey()));
-    return map;
-  }
-
   private WebClient webClientWithAuth(String path, MultiValueMap<String, String> params) {
+    int size = 16 * 1024 * 1024;
+    ExchangeStrategies strategies = ExchangeStrategies.builder()
+            .codecs(codecs -> codecs.defaultCodecs().maxInMemorySize(size))
+            .build();
+    MultiValueMap<String, String> parameters = addSignatureToParameters(params, binanceCoreProperties.getSecretKey());
     return WebClient.builder()
-            .uriBuilderFactory(new DefaultUriBuilderFactory(uriComponentsBuilder(path, params)))
+            .exchangeStrategies(strategies)
+            .uriBuilderFactory(new DefaultUriBuilderFactory(uriComponentsBuilder(path, parameters)))
             .defaultHeader("X-MBX-APIKEY", binanceCoreProperties.getApiKey())
             .build();
   }

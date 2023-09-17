@@ -1,36 +1,17 @@
 package ru.lowgraysky.web3.binance.model;
 
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
-import java.util.Collection;
+import java.math.BigDecimal;
+import java.util.List;
 
 @Data
-@NoArgsConstructor
 public class BalanceResponse {
-  private String code;
-  private String msg;
-  private Collection<Vos> snapshotVos;
+  private List<Balance> balances;
 
   @Data
-  @NoArgsConstructor
-  public static class Vos {
-    private VosData data;
-    private String type;
-    private long updateTime;
-  }
-
-  @Data
-  @NoArgsConstructor
-  public static class VosData {
-    private Collection<BalanceData> balances;
-    private double totalAssetOfBtc;
-  }
-
-  @Data
-  public static class BalanceData {
+  public static class Balance {
     private String asset;
-    private double free;
-    private double locked;
+    private BigDecimal free;
   }
 }

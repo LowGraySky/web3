@@ -5,6 +5,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
 import reactor.core.publisher.Mono;
+import ru.lowgraysky.web3.binance.model.BalanceResponse;
 import ru.lowgraysky.web3.binance.model.ServerTimeResponse;
 import ru.lowgraysky.web3.binance.model.SpotResponse;
 import ru.lowgraysky.web3.binance.model.WithdrawResponse;
@@ -65,7 +66,7 @@ public class BinanceHandler implements BaseHandler {
 
   public Mono<ServerResponse> balance(ServerRequest request) {
     return ServerResponse.ok()
-            .body(binanceService.balance(), String.class)
+            .body(binanceService.balance(), BalanceResponse.class)
             .onErrorResume(ERROR_FUNCTION);
   }
 }

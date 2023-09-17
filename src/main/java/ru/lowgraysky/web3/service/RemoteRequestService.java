@@ -2,6 +2,10 @@ package ru.lowgraysky.web3.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.codec.digest.HmacUtils;
+import org.apache.http.NameValuePair;
+import org.apache.http.client.utils.URLEncodedUtils;
+import org.apache.http.message.BasicNameValuePair;
 import org.slf4j.Logger;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.reactive.function.client.ClientResponse;
@@ -10,17 +14,20 @@ import org.springframework.web.util.DefaultUriBuilderFactory;
 import org.springframework.web.util.UriComponentsBuilder;
 import reactor.core.publisher.Mono;
 
+import java.nio.charset.Charset;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Slf4j
 @RequiredArgsConstructor
 public abstract class RemoteRequestService {
 
-  protected final String BASE_URL;
+  private static final String SIGNATURE_ALGORITHM = "HmacSHA256";
   private final String REQUEST_SCHEMA = "https";
   private final String REQUEST_LOG_TEMPLATE = "Perform '{}' request to '{}', with params '{}'";
+  protected final String BASE_URL;
 
   protected void logRequest(Logger logger, String method, String path, Map<String, List<String>> params) {
     logger.info(REQUEST_LOG_TEMPLATE, method, path, params);
@@ -38,6 +45,24 @@ public abstract class RemoteRequestService {
     return WebClient.builder()
             .uriBuilderFactory(new DefaultUriBuilderFactory(uriComponentsBuilder(path, params)))
             .build();
+  }
+
+  protected String signature(String data, String secret) {
+    return new HmacUtils(SIGNATURE_ALGORITHM, secret).hmacHex(data);
+  }
+
+  protected MultiValueMap<String, String> addSignatureToParameters(
+          MultiValueMap<String, String> params, String secret
+  ) {
+    List<NameValuePair> valuePairs = params.toSingleValueMap()
+            .entrySet()
+            .stream()
+            .map(entry -> new BasicNameValuePair(entry.getKey(), entry.getValue()))
+            .collect(Collectors.toList());
+    String data = URLEncodedUtils.format(valuePairs, Charset.defaultCharset());
+    String sign = signature(data, secret);
+    params.add("signature", sign);
+    return params;
   }
 
   protected UriComponentsBuilder uriComponentsBuilder(String path, MultiValueMap<String, String> params) {
